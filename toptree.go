@@ -2,6 +2,7 @@ package gotest
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"strings"
 )
@@ -17,6 +18,32 @@ func NewTopTree() *TopTree {
 	return &TopTree{
 		path: make([]*Node, 0, max),
 	}
+}
+
+func (t *TopTree) String() string {
+	var sb strings.Builder
+	sb.Grow(1024 * 1024)
+
+	fmt.Fprintln(&sb, "")
+
+	var write func(io.Writer, int, *Node)
+	write = func(prefix string) func(b io.Writer, level int, n *Node) {
+		return func(b io.Writer, level int, n *Node) {
+			if n == nil {
+				return
+			}
+			if n.Right != nil {
+				write(b, level+1, n.Right)
+			}
+			fmt.Fprintf(b, "%v[%02v]\n", strings.Repeat(prefix, level), n.GetID())
+			if n.Left != nil {
+				write(b, level+1, n.Left)
+			}
+		}
+	}("   ")
+	write(&sb, 1, t.Root)
+
+	return sb.String()
 }
 
 func (t *TopTree) searchPath(id int) (*Node, int) {
@@ -67,51 +94,6 @@ func (t *TopTree) Append(u *User) {
 	t.Last = t.Last.Right
 
 	t.rotate()
-}
-
-type Item interface {
-	GetID() int
-}
-
-func (t *TopTree) String() string {
-	h := t.Root.getHeight()
-
-	fmt.Println("height:", h)
-	fmt.Println("LeftID:", t.Root.Left.GetID())
-	fmt.Println("RightID:", t.Root.Right.GetID())
-
-	fg := make([]*Node, h^2)
-	bg := make([]*Node, h^2)
-
-	fg = fg[:1]
-	fg[0] = t.Root
-
-	var b strings.Builder
-	b.Grow(h * (2 ^ (h + 1)))
-
-	for i := 1; i < h; i++ {
-		bg = bg[0 : 2^i]
-		rc := 2 ^ (h - i) - 1
-		for n := range fg {
-			bg[2*n] = fg[n].Left
-			bg[2*n+1] = fg[n].Right
-			s := strings.Repeat(" ", rc)
-			p := strings.Repeat(".", rc)
-			fmt.Fprintf(&b, "%v%v%02v%v%v", s, p, fg[i].GetID(), p, s)
-			fmt.Printf("%v%v%02v%v%v", s, p, fg[i].GetID(), p, s)
-		}
-		fmt.Fprintln(&b, "")
-		fmt.Println("")
-
-		bg, fg = fg, bg
-	}
-
-	//       .......10.......
-	//   ...08...        ...12...
-	// .07.    .09.    .11.    .13.
-	//07  09  11  13  07  09  00  13
-
-	return b.String()
 }
 
 func (t *TopTree) rotate() {
@@ -203,39 +185,4 @@ func (t *TopTree) Delete(n *Node) {
 	}
 
 	t.rotate()
-}
-
-type Node struct {
-	Item  *User
-	Left  *Node
-	Right *Node
-	b     int
-}
-
-func (n *Node) GetID() int {
-	if n == nil {
-		return 0
-	}
-	return n.Item.ID
-}
-
-func NewNode(item *User, left, right *Node) *Node {
-	return &Node{Item: item, Left: left, Right: right}
-}
-
-func (n *Node) GetBalanceFactor() int {
-	return n.Right.getHeight() - n.Left.getHeight()
-}
-
-func (n *Node) getHeight() int {
-	height, root := 0, n
-	for root != nil {
-		if root.b == -1 {
-			root = root.Left
-		} else {
-			root = root.Right
-		}
-		height++
-	}
-	return height
 }
