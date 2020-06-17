@@ -21,94 +21,134 @@ func NewTopTree() *TopTree {
 }
 
 func (t *TopTree) String() string {
+	const PREFIX string = "   "
+
+	if t.Root == nil {
+		return "[  ]"
+	}
+
+	height := t.Root.getHeight()
+	rowLength := height*4 - 1
+	rowCount := 2 ^ height - 1
+
 	var sb strings.Builder
-	sb.Grow(1024 * 1024)
+	sb.Grow(rowLength * rowCount)
 
 	fmt.Fprintln(&sb, "")
 
 	var write func(io.Writer, int, *Node)
-	write = func(prefix string) func(b io.Writer, level int, n *Node) {
-		return func(b io.Writer, level int, n *Node) {
-			if n == nil {
-				return
-			}
-			if n.Right != nil {
-				write(b, level+1, n.Right)
-			}
-			fmt.Fprintf(b, "%v[%02v]\n", strings.Repeat(prefix, level), n.GetID())
-			if n.Left != nil {
-				write(b, level+1, n.Left)
-			}
+	write = func(b io.Writer, level int, n *Node) {
+		if n == nil {
+			return
 		}
-	}("   ")
+		if n.Right != nil {
+			write(b, level+1, n.Right)
+		}
+		fmt.Fprintf(b, "%v[%02v]\n", strings.Repeat(PREFIX, level), n.GetID())
+		if n.Left != nil {
+			write(b, level+1, n.Left)
+		}
+	}
 	write(&sb, 1, t.Root)
 
 	return sb.String()
 }
 
-func (t *TopTree) searchPath(id int) (*Node, int) {
-	t.path = t.path[:]
+func (t *TopTree) searchNode(id int) (*Node, int) {
+	t.path = t.path[0:0]
 
 	if t.Root == nil {
 		return nil, 0
 	}
 
-	root := t.Root
+	last := t.Root
 	for {
-		t.path = append(t.path, root)
-		fmt.Println("append.path:", root.Item.ID, "search:", id)
+		t.path = append(t.path, last)
 
-		if id < root.Item.ID {
-			if root.Left == nil {
-				return root, -1
+		if id < last.Item.ID {
+			if last.Left == nil {
+				return last, -1
 			}
-			root = root.Left
-		} else if id > root.Item.ID {
-			if root.Right == nil {
-				return root, 1
+			last = last.Left
+		} else if id > last.Item.ID {
+			if last.Right == nil {
+				return last, 1
 			}
-			root = root.Right
+			last = last.Right
 		} else {
-			return root, 0
+			return last, 0
 		}
 	}
 }
 
-func (t *TopTree) Append(u *User) {
-	if t.Last == nil {
-		fmt.Println("append,nil,", u.ID)
-		t.Last = NewNode(u, nil, nil)
+type Comparer interface {
+	Compare(Comparer) int
+}
+type Ucmp struct {
+	ID int
+}
+
+func (u *Ucmp) Compare(u2 Comparer) int {
+	return u.ID - u2.(*Ucmp).ID
+}
+
+func (t *TopTree) Insert(u *User) {
+
+	node := NewNode(u, nil, nil)
+	if t.Root == nil {
+		t.Root = node
+		return
+	}
+
+	last, dir := t.searchNode(u.ID)
+	if dir > 0 {
+		last.Right = node
+	} else if dir < 0 {
+		last.Left = node
+	} else {
+		log.Fatalf("ID '%v' is already exist", u.ID)
+	}
+
+	t.rotate()
+}
+
+func (t *TopTree) Append2(u *User) {
+	t.Last = NewNode(u, nil, nil)
+
+	if t.Root == nil {
 		t.Root = t.Last
 		return
 	}
-	fmt.Println("append", u.ID)
 
-	lastNode, dir := t.searchPath(t.Last.Item.ID)
+	lastNode, dir := t.searchNode(t.Last.Item.ID)
 	if lastNode != t.Last {
 		log.Fatal("The found node ", lastNode.Item.ID, " is not equal to the last node ", u.ID)
 	}
 	if dir < 0 {
 		log.Fatal("A new node must be insert to the right:", u.ID, dir)
 	}
-	t.Last.Right = NewNode(u, nil, nil)
-	t.Last = t.Last.Right
+	lastNode.Right = t.Last
 
 	t.rotate()
 }
 
 func (t *TopTree) rotate() {
-	for i := len(t.path) - 2; i > 0; i-- {
+	for i := len(t.path) - 2; i >= 0; i-- {
 		b := t.path[i].GetBalanceFactor()
 		if b > 1 {
 			if t.path[i].Right.b >= 0 {
-				if t.path[i-1].Left == t.path[i] {
+				if i == 0 {
+					t.Root = t.path[i].Right
+				} else if t.path[i-1].Left == t.path[i] {
 					t.path[i-1].Left = t.path[i].Right
 				} else {
 					t.path[i-1].Right = t.path[i].Right
 				}
 				t.path[i].Right, t.path[i].Right.Left = t.path[i].Right.Left, t.path[i]
 			} else {
-				if t.path[i-1].Left == t.path[i] {
+				if i == 0 {
+					t.Root = t.path[i].Right.Left
+				} else if t.path[i-1].Left == t.path[i] {
 					t.path[i-1].Left = t.path[i].Right.Left
 				} else {
 					t.path[i-1].Right = t.path[i].Right.Left
@@ -118,14 +158,18 @@ func (t *TopTree) rotate() {
 			}
 		} else if b < -1 {
 			if t.path[i].Left.b >= 0 {
-				if t.path[i-1].Left == t.path[i] {
+				if i == 0 {
+					t.Root = t.path[i].Left
+				} else if t.path[i-1].Left == t.path[i] {
 					t.path[i-1].Left = t.path[i].Left
 				} else {
 					t.path[i-1].Right = t.path[i].Left
 				}
 				t.path[i].Left, t.path[i].Left.Right = t.path[i].Left.Right, t.path[i]
 			} else {
-				if t.path[i-1].Left == t.path[i] {
+				if i == 0 {
+					t.Root = t.path[i].Left.Right
+				} else if t.path[i-1].Left == t.path[i] {
 					t.path[i-1].Left = t.path[i].Left.Right
 				} else {
 					t.path[i-1].Right = t.path[i].Left.Right
@@ -136,19 +180,18 @@ func (t *TopTree) rotate() {
 		}
 
 		b2 := t.path[i].GetBalanceFactor()
-		if b == b2 {
-			return
+		if b != b2 {
+			t.path[i].b = b2
 		}
-		t.path[i].b = b2
 	}
 }
 
 func (t *TopTree) Delete(n *Node) {
-	lastNode, dir := t.searchPath(n.Item.ID)
-	if lastNode == nil || dir != 0 {
+	last, dir := t.searchNode(n.Item.ID)
+	if last == nil || dir != 0 {
 		return
 	}
-	if lastNode == t.Root {
+	if last == t.Root {
 		t.Root = nil
 		return
 	}

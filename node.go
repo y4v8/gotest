@@ -25,7 +25,7 @@ func NewNode(item *User, left, right *Node) *Node {
 }
 
 func (n *Node) String() string {
-	return fmt.Sprintf("%v, left:%v, right:%v", n.GetID(), n.Left.GetID(), n.Right.GetID())
+	return fmt.Sprintf("%v-left:%v-right:%v", n.GetID(), n.Left.GetID(), n.Right.GetID())
 }
 
 func (n *Node) GetBalanceFactor() int {
