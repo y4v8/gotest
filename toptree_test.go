@@ -77,19 +77,6 @@ func TestCmp(t *testing.T) {
 }
 
 func TestTopTree2(t *testing.T) {
-
-	cmp := func(u1, u2 *User) int {
-		//
-		return 0
-	}
-	_ = cmp
-	cmi := func(i1 int) func(int) int {
-		return func(i2 int) int {
-			return i1 - i2
-		}
-	}
-	_ = cmi
-
 	tree := NewTopTree()
 
 	u1 := &User{ID: 1, Name: "usr1", UpdateID: 10}
@@ -109,6 +96,8 @@ func TestTopTree2(t *testing.T) {
 	tree.Insert(u6)
 	tree.Insert(u7)
 	tree.Insert(u8)
+
+	tree.Delete(u6)
 
 	t.Error(tree.String())
 

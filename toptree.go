@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -21,10 +22,10 @@ func NewTopTree() *TopTree {
 }
 
 func (t *TopTree) String() string {
-	const PREFIX string = "   "
+	const PREFIX string = "     "
 
 	if t.Root == nil {
-		return "[  ]"
+		return "[    ]"
 	}
 
 	height := t.Root.getHeight()
@@ -44,7 +45,13 @@ func (t *TopTree) String() string {
 		if n.Right != nil {
 			write(b, level+1, n.Right)
 		}
-		fmt.Fprintf(b, "%v[%02v]\n", strings.Repeat(PREFIX, level), n.GetID())
+		nb := ".0"
+		if n.b > 0 {
+			nb = "+" + strconv.FormatInt(int64(n.b), 10)
+		} else if n.b < 0 {
+			nb = strconv.FormatInt(int64(n.b), 10)
+		}
+		fmt.Fprintf(b, "%v[%02v%v]\n", strings.Repeat(PREFIX, level), n.GetID(), nb)
 		if n.Left != nil {
 			write(b, level+1, n.Left)
 		}
@@ -133,7 +140,7 @@ func (t *TopTree) Append2(u *User) {
 }
 
 func (t *TopTree) rotate() {
-	for i := len(t.path) - 2; i >= 0; i-- {
+	for i := len(t.path) - 1; i >= 0; i-- {
 		b := t.path[i].GetBalanceFactor()
 		if b > 1 {
 			if t.path[i].Right.b >= 0 {
@@ -179,15 +186,12 @@ func (t *TopTree) rotate() {
 			}
 		}
 
-		b2 := t.path[i].GetBalanceFactor()
-		if b != b2 {
-			t.path[i].b = b2
-		}
+		t.path[i].b = t.path[i].GetBalanceFactor()
 	}
 }
 
-func (t *TopTree) Delete(n *Node) {
-	last, dir := t.searchNode(n.Item.ID)
+func (t *TopTree) Delete(u *User) {
+	last, dir := t.searchNode(u.ID)
 	if last == nil || dir != 0 {
 		return
 	}
@@ -197,8 +201,8 @@ func (t *TopTree) Delete(n *Node) {
 	}
 
 	parent := t.path[len(t.path)-2]
-	if n.Left == nil && n.Right == nil {
-		if dir == -1 {
+	if last.Left == nil && last.Right == nil {
+		if parent.Left == last {
 			parent.Left = nil
 		} else {
 			parent.Right = nil
@@ -206,24 +210,24 @@ func (t *TopTree) Delete(n *Node) {
 		return
 	}
 
-	leftID, rightID := n.Item.ID, n.Item.ID
-	if n.Left != nil {
-		leftID = n.Item.ID - n.Left.Item.ID
+	leftID, rightID := last.Item.ID, last.Item.ID
+	if last.Left != nil {
+		leftID = last.Item.ID - last.Left.Item.ID
 	}
-	if n.Right != nil {
-		rightID = n.Right.Item.ID - n.Item.ID
+	if last.Right != nil {
+		rightID = last.Right.Item.ID - last.Item.ID
 	}
 	if leftID < rightID {
 		if dir == -1 {
-			parent.Left, n.Left = n.Left, parent.Left
+			parent.Left, last.Left = last.Left, parent.Left
 		} else {
-			parent.Right, n.Left = n.Left, parent.Right
+			parent.Right, last.Left = last.Left, parent.Right
 		}
 	} else {
 		if dir == -1 {
-			parent.Left, n.Right = n.Right, parent.Left
+			parent.Left, last.Right = last.Right, parent.Left
 		} else {
-			parent.Right, n.Right = n.Right, parent.Right
+			parent.Right, last.Right = last.Right, parent.Right
 		}
 	}
 
