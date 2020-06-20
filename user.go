@@ -32,9 +32,9 @@ func (a ByUpdateID) Less(i, j int) bool { return a[i].UpdateID < a[j].UpdateID }
 func SampleUsers(n int) []User {
 	users := make([]User, n)
 	for i := range users {
-		users[i].ID = i
-		users[i].Name = "name" + strconv.FormatInt(int64(i), 10)
-		users[i].UpdateID = i
+		users[i].ID = i + 1
+		users[i].Name = "name" + strconv.FormatInt(int64(i+1), 10)
+		users[i].UpdateID = i + 1
 	}
 
 	rand.Shuffle(len(users), func(i, j int) {

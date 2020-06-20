@@ -1,11 +1,5 @@
 package gotest
 
-import "fmt"
-
-type Item interface {
-	GetID() int
-}
-
 type Node struct {
 	Item  *User
 	Left  *Node
@@ -13,19 +7,8 @@ type Node struct {
 	b     int
 }
 
-func (n *Node) GetID() int {
-	if n == nil || n.Item == nil {
-		return 0
-	}
-	return n.Item.ID
-}
-
 func NewNode(item *User, left, right *Node) *Node {
 	return &Node{Item: item, Left: left, Right: right}
-}
-
-func (n *Node) String() string {
-	return fmt.Sprintf("%v-left:%v-right:%v", n.GetID(), n.Left.GetID(), n.Right.GetID())
 }
 
 func (n *Node) GetBalanceFactor() int {
