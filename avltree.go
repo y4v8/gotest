@@ -1,97 +1,25 @@
 package gotest
 
 import (
-	"fmt"
-	"io"
 	"strconv"
-	"strings"
 )
 
 type AVLTree struct {
 	Root     *Node
 	path     []*Node
-	GetIndex func(u *User) int
+	getIndex func(u *User) int
 }
 
 func NewAVLTree(getIndex func(*User) int) *AVLTree {
 	const max int = 45
 	return &AVLTree{
 		path:     make([]*Node, 0, max),
-		GetIndex: getIndex,
+		getIndex: getIndex,
 	}
 }
 
 func (t *AVLTree) String() string {
-	if t.Root == nil {
-		return "[]"
-	}
-
-	max := 0
-	for last := t.Root; last != nil; last = last.Right {
-		max = t.GetIndex(last.Item)
-	}
-	repeat := 0
-	for ; max > 0; max /= 10 {
-		repeat++
-	}
-	vs := "|  " + strings.Repeat(" ", repeat)
-	es := "   " + strings.Repeat(" ", repeat)
-	format := "%v[%0" + strconv.Itoa(repeat) + "v%v]\n"
-
-	height := t.Root.getHeight()
-	rowLength := height*4 - 1
-	rowCount := 2<<(height-1) - 1
-
-	var sb strings.Builder
-	sb.Grow(rowLength * rowCount)
-
-	fmt.Fprintln(&sb, "")
-
-	var write func(io.Writer, string, int, *Node)
-	write = func(b io.Writer, prefix string, dir int, n *Node) {
-		if n == nil {
-			return
-		}
-		if n.Right != nil {
-			if dir < 0 {
-				write(b, prefix+vs, 1, n.Right)
-			} else {
-				write(b, prefix+es, 1, n.Right)
-			}
-		}
-		nb := ".0"
-		if n.b > 0 {
-			nb = "+" + strconv.FormatInt(int64(n.b), 10)
-		} else if n.b < 0 {
-			nb = strconv.FormatInt(int64(n.b), 10)
-		}
-		fmt.Fprintf(b, format, prefix, t.GetIndex(n.Item), nb)
-		if n.Left != nil {
-			if dir > 0 {
-				write(b, prefix+vs, -1, n.Left)
-			} else {
-				write(b, prefix+es, -1, n.Left)
-			}
-		}
-	}
-	write(&sb, "", 0, t.Root)
-
-	return sb.String()
-}
-
-func (t *AVLTree) Length() int {
-	var sum func(*Node) int
-	sum = func(n *Node) int {
-		k := 1
-		if n.Left != nil {
-			k += sum(n.Left)
-		}
-		if n.Right != nil {
-			k += sum(n.Right)
-		}
-		return k
-	}
-	return sum(t.Root)
+	return t.Root.Sprint(t.getIndex)
 }
 
 func (t *AVLTree) Insert(u *User) {
@@ -107,7 +35,7 @@ func (t *AVLTree) Insert(u *User) {
 	} else if dir < 0 {
 		last.Left = node
 	} else {
-		panic("Index '" + strconv.Itoa(t.GetIndex(u)) + "' is already exist")
+		panic("Index '" + strconv.Itoa(t.getIndex(u)) + "' is already exist")
 	}
 
 	t.rotate()
@@ -131,7 +59,7 @@ func (t *AVLTree) Delete(u *User) {
 		p = lastLeft
 	} else {
 		p = t.searchMin(lastRight)
-		m := len(t.path) - 2
+		m := len(t.path) - 1
 		if m >= 0 {
 			if t.path[m].Left == p {
 				t.path[m].Left = p.Right
@@ -140,7 +68,9 @@ func (t *AVLTree) Delete(u *User) {
 			}
 		}
 		p.Left = lastLeft
-		p.Right = lastRight
+		if p != lastRight {
+			p.Right = lastRight
+		}
 	}
 
 	if parent == nil {
@@ -155,11 +85,11 @@ func (t *AVLTree) Delete(u *User) {
 }
 
 func (t *AVLTree) Get(u *User) *Node {
-	id := t.GetIndex(u)
+	id := t.getIndex(u)
 
 	last := t.Root
 	for last != nil {
-		lastID := t.GetIndex(last.Item)
+		lastID := t.getIndex(last.Item)
 		if id < lastID {
 			last = last.Left
 		} else if id > lastID {
@@ -178,12 +108,12 @@ func (t *AVLTree) searchNode(u *User) (*Node, int) {
 		return nil, 0
 	}
 
-	id := t.GetIndex(u)
+	id := t.getIndex(u)
 	last := t.Root
 	for {
 		t.path = append(t.path, last)
 
-		lastID := t.GetIndex(last.Item)
+		lastID := t.getIndex(last.Item)
 		if id < lastID {
 			if last.Left == nil {
 				return last, -1
@@ -203,8 +133,8 @@ func (t *AVLTree) searchNode(u *User) (*Node, int) {
 func (t *AVLTree) searchMin(n *Node) *Node {
 	last := n
 	for last.Left != nil {
-		last = last.Left
 		t.path = append(t.path, last)
+		last = last.Left
 	}
 	return last
 }

@@ -1,15 +1,33 @@
 package gotest
 
 import (
+	"fmt"
+	"math/rand"
 	"sort"
+	"strconv"
 	"testing"
 )
 
+func SampleUsers3(n int) []User {
+	users := make([]User, n)
+	for i := range users {
+		users[i].ID = i + 1
+		users[i].Name = "name" + strconv.FormatInt(int64(i+1), 10)
+		users[i].UpdateID = i + 1
+	}
+
+	rand.Shuffle(len(users), func(i, j int) {
+		users[i].UpdateID, users[j].UpdateID = users[j].UpdateID, users[i].UpdateID
+	})
+
+	return users
+}
+
 func BenchmarkTree(b *testing.B) {
-	sample := SampleUsers(10000)
+	sample := SampleUsers(100)
 	u := &User{
 		ID:       88,
-		UpdateID: 88,
+		UpdateID: 1,
 	}
 	_ = u
 
@@ -25,8 +43,19 @@ func BenchmarkTree(b *testing.B) {
 		if node == nil || node.Item.UpdateID != u.UpdateID {
 			b.Fatalf("error: %v", tree)
 		}
+
+		min := u.UpdateID
+		items := tree.Root.GetItems(u, tree.getIndex)
+		for _, item := range items {
+			if item.UpdateID > min {
+				min = item.UpdateID
+			} else {
+				b.Fatal(min, ">=", item.UpdateID)
+			}
+			fmt.Println(item)
+		}
+		b.Fatal(1)
 	}
-	b.StopTimer()
 }
 
 func BenchmarkArray(b *testing.B) {
@@ -49,5 +78,4 @@ func BenchmarkArray(b *testing.B) {
 			b.Fatalf("error: %v", n)
 		}
 	}
-	b.StopTimer()
 }
