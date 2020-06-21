@@ -243,6 +243,9 @@ func (t *AVLTree) rotate() {
 			}
 			p = t.rotateRight(t.path[i])
 		} else {
+			if t.path[i].b == b {
+				return
+			}
 			t.path[i].b = b
 			continue
 		}
