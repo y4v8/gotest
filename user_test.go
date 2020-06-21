@@ -40,7 +40,7 @@ func BenchmarkTree(b *testing.B) {
 			b.Fatalf("error: %v", tree)
 		}
 		tree.Delete(&User{UpdateID: 46})
-		b.Fatalf("error: %v", tree)
+		b.Fatal(tree)
 	}
 	b.StopTimer()
 }

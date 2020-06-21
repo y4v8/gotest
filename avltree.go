@@ -34,7 +34,8 @@ func (t *AVLTree) String() string {
 	for ; max > 0; max /= 10 {
 		repeat++
 	}
-	prefix := "   " + strings.Repeat(" ", repeat)
+	vs := "|  " + strings.Repeat(" ", repeat)
+	es := "   " + strings.Repeat(" ", repeat)
 	format := "%v[%0" + strconv.Itoa(repeat) + "v%v]\n"
 
 	height := t.Root.getHeight()
@@ -46,13 +47,17 @@ func (t *AVLTree) String() string {
 
 	fmt.Fprintln(&sb, "")
 
-	var write func(io.Writer, int, *Node)
-	write = func(b io.Writer, level int, n *Node) {
+	var write func(io.Writer, string, int, *Node)
+	write = func(b io.Writer, prefix string, dir int, n *Node) {
 		if n == nil {
 			return
 		}
 		if n.Right != nil {
-			write(b, level+1, n.Right)
+			if dir < 0 {
+				write(b, prefix+vs, 1, n.Right)
+			} else {
+				write(b, prefix+es, 1, n.Right)
+			}
 		}
 		nb := ".0"
 		if n.b > 0 {
@@ -60,12 +65,16 @@ func (t *AVLTree) String() string {
 		} else if n.b < 0 {
 			nb = strconv.FormatInt(int64(n.b), 10)
 		}
-		fmt.Fprintf(b, format, strings.Repeat(prefix, level), t.GetIndex(n.Item), nb)
+		fmt.Fprintf(b, format, prefix, t.GetIndex(n.Item), nb)
 		if n.Left != nil {
-			write(b, level+1, n.Left)
+			if dir > 0 {
+				write(b, prefix+vs, -1, n.Left)
+			} else {
+				write(b, prefix+es, -1, n.Left)
+			}
 		}
 	}
-	write(&sb, 1, t.Root)
+	write(&sb, "", 0, t.Root)
 
 	return sb.String()
 }
