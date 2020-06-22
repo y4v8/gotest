@@ -58,9 +58,9 @@ func (n *Node) Sprint(getIndex func(*User) int) string {
 		}
 		nb := ".0"
 		if n.b > 0 {
-			nb = "+" + strconv.FormatInt(int64(n.b), 10)
+			nb = "+" + strconv.Itoa(n.b)
 		} else if n.b < 0 {
-			nb = strconv.FormatInt(int64(n.b), 10)
+			nb = strconv.Itoa(n.b)
 		}
 		fmt.Fprintf(b, format, prefix, getIndex(n.Item), nb)
 		if n.Left != nil {

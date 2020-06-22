@@ -12,7 +12,7 @@ func sampleUsers(n int) []User {
 	users := make([]User, n)
 	for i := range users {
 		users[i].ID = i + 1
-		users[i].Name = "name" + strconv.FormatInt(int64(i+1), 10)
+		users[i].Name = "name" + strconv.Itoa(i+1)
 		users[i].UpdateID = i + 1
 	}
 
