@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -67,6 +68,30 @@ func BenchmarkArray(b *testing.B) {
 	}
 }
 
+func BenchmarkSortedArray(b *testing.B) {
+	sample := sampleUsers(2000)
+	u := &User{
+		ID:       88,
+		UpdateID: 88,
+	}
+	_ = u
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		users := make([]User, 0, len(sample))
+		for k := range sample {
+			n := sort.Search(k, func(i int) bool { return users[i].UpdateID >= sample[k].UpdateID })
+			users = append(users, sample[k])
+			copy(users[n+1:], users[n:])
+			users[n] = sample[k]
+		}
+		n := sort.Search(len(users), func(i int) bool { return users[i].UpdateID >= u.UpdateID })
+		if n >= len(users) || users[n].UpdateID != u.UpdateID {
+			b.Fatalf("error: %v", n)
+		}
+	}
+}
+
 func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*User) int) {
 	tlen := tree.Root.Length()
 	if slen != tlen {
@@ -104,7 +129,7 @@ func TestGet(t *testing.T) {
 	testAVLTreeGet(t, tree, len(users), getIndex)
 }
 
-func TestDelete2(t *testing.T) {
+func TestDelete(t *testing.T) {
 	users := sampleUsers(100)
 	getIndex := func(u *User) int { return u.UpdateID }
 
@@ -117,4 +142,35 @@ func TestDelete2(t *testing.T) {
 	tree.Delete(u)
 
 	testAVLTreeGet(t, tree, len(users)-1, getIndex)
+}
+
+func TestGetItems(t *testing.T) {
+	users := sampleUsers(100)
+	getIndex := func(u *User) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+	}
+
+	u := &User{ID: 11, UpdateID: 93}
+	tree.Delete(u)
+	u = &User{ID: 11, UpdateID: 92}
+	tree.Delete(u)
+	u = &User{ID: 11, UpdateID: 94}
+	tree.Delete(u)
+
+	u = &User{ID: 11, UpdateID: 90}
+
+	items := tree.Root.GetItems(u, getIndex)
+	indices := make([]string, len(items))
+	for i := range items {
+		indices[i] = strconv.Itoa(getIndex(items[i]))
+	}
+
+	result := strings.Join(indices, ",")
+	expect := "90,91,95,96,97,98,99,100"
+	if result != expect {
+		t.Errorf("indices are '%v', expect '%v'", result, expect)
+	}
 }
