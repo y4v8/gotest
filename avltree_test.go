@@ -105,7 +105,7 @@ func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*User) 
 	}
 
 	min := getIndex(u) - 1
-	items := tree.Root.GetItems(u, tree.getIndex)
+	items := tree.Root.GetItems(u, getIndex)
 	for _, item := range items {
 		index := getIndex(item)
 		if index > min {
