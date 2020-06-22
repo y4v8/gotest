@@ -2,11 +2,12 @@ package gotest
 
 import (
 	"math/rand"
+	"sort"
 	"strconv"
 	"testing"
 )
 
-func SampleUsers(n int) []User {
+func sampleUsers(n int) []User {
 	users := make([]User, n)
 	for i := range users {
 		users[i].ID = i + 1
@@ -19,6 +20,51 @@ func SampleUsers(n int) []User {
 	})
 
 	return users
+}
+
+func BenchmarkTree(b *testing.B) {
+	sample := sampleUsers(2000)
+	u := &User{
+		ID:       88,
+		UpdateID: 1,
+	}
+	_ = u
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tree := NewAVLTree(func(u *User) int {
+			return u.UpdateID
+		})
+		for u := range sample {
+			tree.Insert(&sample[u])
+		}
+		node := tree.Get(u)
+		if node == nil || node.Item.UpdateID != u.UpdateID {
+			b.Fatalf("error: %v", tree)
+		}
+	}
+}
+
+func BenchmarkArray(b *testing.B) {
+	sample := sampleUsers(2000)
+	u := &User{
+		ID:       88,
+		UpdateID: 88,
+	}
+	_ = u
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		users := make([]User, 0, len(sample))
+		for u := range sample {
+			users = append(users, sample[u])
+			sort.Sort(ByUpdateID(users))
+		}
+		n := sort.Search(len(users), func(i int) bool { return users[i].UpdateID >= u.UpdateID })
+		if n >= len(users) || users[n].UpdateID != u.UpdateID {
+			b.Fatalf("error: %v", n)
+		}
+	}
 }
 
 func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*User) int) {
@@ -47,46 +93,27 @@ func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*User) 
 }
 
 func TestGet(t *testing.T) {
-	users := SampleUsers(100)
+	users := sampleUsers(100)
 	getIndex := func(u *User) int { return u.UpdateID }
 
 	tree := NewAVLTree(getIndex)
 	for i := range users {
 		tree.Insert(&users[i])
 	}
-	// t.Fatal(tree)
+
 	testAVLTreeGet(t, tree, len(users), getIndex)
 }
 
-func TestDelete(t *testing.T) {
-	users := SampleUsers(100)
-	getIndex := func(u *User) int { return u.UpdateID }
-
-	tree := NewAVLTree(getIndex)
-	for i := range users {
-		tree.Insert(&users[i])
-	}
-	// t.Fatal(tree)
-
-	u := &User{ID: 46, UpdateID: 56}
-	_ = u
-	tree.Delete(u)
-
-	// testAVLTreeGet(t, tree, len(users)-1, getIndex)
-}
-
 func TestDelete2(t *testing.T) {
-	users := SampleUsers(100)
+	users := sampleUsers(100)
 	getIndex := func(u *User) int { return u.UpdateID }
 
 	tree := NewAVLTree(getIndex)
 	for i := range users {
 		tree.Insert(&users[i])
 	}
-	// t.Fatal(tree)
 
-	u := &User{ID: 11, UpdateID: 3}
-	_ = u
+	u := &User{ID: 11, UpdateID: 56}
 	tree.Delete(u)
 
 	testAVLTreeGet(t, tree, len(users)-1, getIndex)

@@ -54,22 +54,15 @@ func (t *AVLTree) Delete(u *User) {
 	}
 
 	var p *Node
-	lastLeft, lastRight := last.Left, last.Right
-	if lastRight == nil {
-		p = lastLeft
+	if last.Right == nil {
+		p = last.Left
 	} else {
-		p = t.searchMin(lastRight)
-		m := len(t.path) - 1
-		if m >= 0 {
-			if t.path[m].Left == p {
-				t.path[m].Left = p.Right
-			} else {
-				t.path[m].Right = p.Right
-			}
-		}
-		p.Left = lastLeft
-		if p != lastRight {
-			p.Right = lastRight
+		p = t.searchMin(last.Right)
+		p.Left = last.Left
+		if p != last.Right {
+			i = len(t.path) - 1
+			t.path[i].Left = p.Right
+			p.Right = last.Right
 		}
 	}
 
@@ -131,11 +124,13 @@ func (t *AVLTree) searchNode(u *User) (*Node, int) {
 }
 
 func (t *AVLTree) searchMin(n *Node) *Node {
+	i := len(t.path) - 1
 	last := n
 	for last.Left != nil {
 		t.path = append(t.path, last)
 		last = last.Left
 	}
+	t.path[i] = last
 	return last
 }
 
