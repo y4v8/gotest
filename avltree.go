@@ -10,7 +10,7 @@ import (
 type AVLTree struct {
 	Root     *Node
 	path     []*Node
-	getIndex func(u *Item) int
+	getIndex func(*Item) int
 }
 
 func NewAVLTree(getIndex func(*Item) int) *AVLTree {
@@ -73,27 +73,27 @@ func (t *AVLTree) String() string {
 	return sb.String()
 }
 
-func (t *AVLTree) Insert(u *Item) {
-	node := NewNode(u, nil, nil)
+func (t *AVLTree) Insert(item *Item) {
+	node := NewNode(item)
 	if t.Root == nil {
 		t.Root = node
 		return
 	}
 
-	last, dir := t.searchNode(u)
+	last, dir := t.searchNode(item)
 	if dir > 0 {
 		last.Right = node
 	} else if dir < 0 {
 		last.Left = node
 	} else {
-		panic("Index '" + strconv.Itoa(t.getIndex(u)) + "' is already exist")
+		panic("Index '" + strconv.Itoa(t.getIndex(item)) + "' is already exist")
 	}
 
 	t.rotate()
 }
 
-func (t *AVLTree) Delete(u *Item) {
-	last, dir := t.searchNode(u)
+func (t *AVLTree) Delete(item *Item) {
+	last, dir := t.searchNode(item)
 	if last == nil || dir != 0 {
 		return
 	}
@@ -128,8 +128,8 @@ func (t *AVLTree) Delete(u *Item) {
 	t.rotate()
 }
 
-func (t *AVLTree) Get(u *Item) *Node {
-	id := t.getIndex(u)
+func (t *AVLTree) Get(item *Item) *Node {
+	id := t.getIndex(item)
 
 	last := t.Root
 	for last != nil {
@@ -145,13 +145,13 @@ func (t *AVLTree) Get(u *Item) *Node {
 	return nil
 }
 
-func (t *AVLTree) GetItems(u *Item) []*Item {
+func (t *AVLTree) GetItems(item *Item) []*Item {
 	nodes := make([]*Item, 0, t.Root.Length())
 	if t.Root == nil {
 		return nodes
 	}
 
-	id := t.getIndex(u)
+	id := t.getIndex(item)
 	var appendItem func(*Node)
 	appendItem = func(n *Node) {
 		if n.Left != nil {
@@ -169,14 +169,14 @@ func (t *AVLTree) GetItems(u *Item) []*Item {
 	return nodes
 }
 
-func (t *AVLTree) searchNode(u *Item) (*Node, int) {
+func (t *AVLTree) searchNode(item *Item) (*Node, int) {
 	t.path = t.path[0:0]
 
 	if t.Root == nil {
 		return nil, 0
 	}
 
-	id := t.getIndex(u)
+	id := t.getIndex(item)
 	last := t.Root
 	for {
 		t.path = append(t.path, last)

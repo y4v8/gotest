@@ -11,8 +11,8 @@ type Node struct {
 	b     int
 }
 
-func NewNode(item *Item, left, right *Node) *Node {
-	return &Node{Item: item, Left: left, Right: right}
+func NewNode(item *Item) *Node {
+	return &Node{Item: item}
 }
 
 func (n *Node) GetBalanceFactor() int {
