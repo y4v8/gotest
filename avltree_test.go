@@ -104,6 +104,12 @@ func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*Item) 
 		t.Errorf("item with index %v is not found", getIndex(u))
 	}
 
+	u = &Item{ID: 8888, UpdateID: 8888}
+	node = tree.Get(u)
+	if node != nil {
+		t.Errorf("item with index %v must do not be found", getIndex(u))
+	}
+
 	min := getIndex(u) - 1
 	items := tree.GetItems(u)
 	for _, item := range items {
