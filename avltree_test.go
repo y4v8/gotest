@@ -8,36 +8,6 @@ import (
 	"testing"
 )
 
-type Sa struct {
-	ID int
-}
-
-func (s *Sa) Str() string {
-	return "Sa" + strconv.Itoa(s.ID)
-}
-
-type Sb Sa
-
-func (s *Sb) Str() string {
-	return "Sb" + strconv.Itoa(s.ID)
-}
-
-type Sn struct {
-	Sb *Sb
-}
-
-func NewSn(sb *Sa) *Sn {
-	return &Sn{Sb: (*Sb)(sb)}
-}
-
-func TestSn(t *testing.T) {
-	// sn := NewSn(&Sa{ID: 3})
-
-	sa := &Sa{ID: 3}
-	sb := (*Sb)(sa)
-	t.Error(sb.Str())
-}
-
 func sampleItems(n int) []Item {
 	users := make([]Item, n)
 	for i := range users {
@@ -135,7 +105,7 @@ func testAVLTreeGet(t *testing.T, tree *AVLTree, slen int, getIndex func(*Item) 
 	}
 
 	min := getIndex(u) - 1
-	items := tree.Root.GetItems(u, getIndex)
+	items := tree.GetItems(u)
 	for _, item := range items {
 		index := getIndex(item)
 		if index > min {
@@ -155,7 +125,6 @@ func TestGet(t *testing.T) {
 	for i := range users {
 		tree.Insert(&users[i])
 	}
-
 	testAVLTreeGet(t, tree, len(users), getIndex)
 }
 
@@ -192,7 +161,7 @@ func TestGetItems(t *testing.T) {
 
 	u = &Item{ID: 11, UpdateID: 90}
 
-	items := tree.Root.GetItems(u, getIndex)
+	items := tree.GetItems(u)
 	indices := make([]string, len(items))
 	for i := range items {
 		indices[i] = strconv.Itoa(getIndex(items[i]))

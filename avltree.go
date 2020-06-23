@@ -1,7 +1,10 @@
 package gotest
 
 import (
+	"fmt"
+	"io"
 	"strconv"
+	"strings"
 )
 
 type AVLTree struct {
@@ -19,7 +22,55 @@ func NewAVLTree(getIndex func(*Item) int) *AVLTree {
 }
 
 func (t *AVLTree) String() string {
-	return t.Root.Sprint(t.getIndex)
+	if t.Root == nil {
+		return "[]"
+	}
+
+	max := 0
+	for last := t.Root; last != nil; last = last.Right {
+		max = t.getIndex(last.Item)
+	}
+	repeat := 0
+	for ; max > 0; max /= 10 {
+		repeat++
+	}
+	vs := "|  " + strings.Repeat(" ", repeat)
+	es := "   " + strings.Repeat(" ", repeat)
+	format := "%v[%0" + strconv.Itoa(repeat+2) + "v]\n"
+
+	height := t.Root.getHeight()
+	rowLength := height*4 - 1
+	rowCount := 2<<(height-1) - 1
+
+	var sb strings.Builder
+	sb.Grow(rowLength * rowCount)
+
+	fmt.Fprintln(&sb, "")
+
+	var write func(io.Writer, string, int, *Node)
+	write = func(b io.Writer, prefix string, dir int, n *Node) {
+		if n == nil {
+			return
+		}
+		if n.Right != nil {
+			if dir < 0 {
+				write(b, prefix+vs, 1, n.Right)
+			} else {
+				write(b, prefix+es, 1, n.Right)
+			}
+		}
+		fmt.Fprintf(b, format, prefix, n.String(t.getIndex))
+		if n.Left != nil {
+			if dir > 0 {
+				write(b, prefix+vs, -1, n.Left)
+			} else {
+				write(b, prefix+es, -1, n.Left)
+			}
+		}
+	}
+	write(&sb, "", 0, t.Root)
+
+	return sb.String()
 }
 
 func (t *AVLTree) Insert(u *Item) {
@@ -92,6 +143,30 @@ func (t *AVLTree) Get(u *Item) *Node {
 		}
 	}
 	return nil
+}
+
+func (t *AVLTree) GetItems(u *Item) []*Item {
+	nodes := make([]*Item, 0, t.Root.Length())
+	if t.Root == nil {
+		return nodes
+	}
+
+	id := t.getIndex(u)
+	var appendItem func(*Node)
+	appendItem = func(n *Node) {
+		if n.Left != nil {
+			appendItem(n.Left)
+		}
+		if t.getIndex(n.Item) >= id {
+			nodes = append(nodes, n.Item)
+		}
+		if n.Right != nil {
+			appendItem(n.Right)
+		}
+	}
+	appendItem(t.Root)
+
+	return nodes
 }
 
 func (t *AVLTree) searchNode(u *Item) (*Node, int) {
