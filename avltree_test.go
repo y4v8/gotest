@@ -56,10 +56,10 @@ func BenchmarkArray(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		users := make([]Item, 0, len(sample))
+		users := make([]User, 0, len(sample))
 		for u := range sample {
-			users = append(users, sample[u])
-			// sort.Sort(ByUpdateID(users)) // TODO:
+			users = append(users, (User)(sample[u]))
+			sort.Sort(ByUpdateID(users)) // TODO:
 		}
 		n := sort.Search(len(users), func(i int) bool { return users[i].UpdateID >= u.UpdateID })
 		if n >= len(users) || users[n].UpdateID != u.UpdateID {
