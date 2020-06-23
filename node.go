@@ -7,18 +7,20 @@ import (
 	"strings"
 )
 
+type Item User
+
 type Node struct {
-	Item  *User
+	Item  *Item
 	Left  *Node
 	Right *Node
 	b     int
 }
 
-func NewNode(item *User, left, right *Node) *Node {
+func NewNode(item *Item, left, right *Node) *Node {
 	return &Node{Item: item, Left: left, Right: right}
 }
 
-func (n *Node) Sprint(getIndex func(*User) int) string {
+func (n *Node) Sprint(getIndex func(*Item) int) string {
 	if n == nil {
 		return "[]"
 	}
@@ -76,8 +78,8 @@ func (n *Node) Sprint(getIndex func(*User) int) string {
 	return sb.String()
 }
 
-func (n *Node) GetItems(u *User, getIndex func(*User) int) []*User {
-	nodes := make([]*User, 0, n.Length())
+func (n *Node) GetItems(u *Item, getIndex func(*Item) int) []*Item {
+	nodes := make([]*Item, 0, n.Length())
 	if n == nil {
 		return nodes
 	}

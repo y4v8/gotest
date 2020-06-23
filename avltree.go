@@ -7,10 +7,10 @@ import (
 type AVLTree struct {
 	Root     *Node
 	path     []*Node
-	getIndex func(u *User) int
+	getIndex func(u *Item) int
 }
 
-func NewAVLTree(getIndex func(*User) int) *AVLTree {
+func NewAVLTree(getIndex func(*Item) int) *AVLTree {
 	const max int = 45
 	return &AVLTree{
 		path:     make([]*Node, 0, max),
@@ -22,7 +22,7 @@ func (t *AVLTree) String() string {
 	return t.Root.Sprint(t.getIndex)
 }
 
-func (t *AVLTree) Insert(u *User) {
+func (t *AVLTree) Insert(u *Item) {
 	node := NewNode(u, nil, nil)
 	if t.Root == nil {
 		t.Root = node
@@ -41,7 +41,7 @@ func (t *AVLTree) Insert(u *User) {
 	t.rotate()
 }
 
-func (t *AVLTree) Delete(u *User) {
+func (t *AVLTree) Delete(u *Item) {
 	last, dir := t.searchNode(u)
 	if last == nil || dir != 0 {
 		return
@@ -77,7 +77,7 @@ func (t *AVLTree) Delete(u *User) {
 	t.rotate()
 }
 
-func (t *AVLTree) Get(u *User) *Node {
+func (t *AVLTree) Get(u *Item) *Node {
 	id := t.getIndex(u)
 
 	last := t.Root
@@ -94,7 +94,7 @@ func (t *AVLTree) Get(u *User) *Node {
 	return nil
 }
 
-func (t *AVLTree) searchNode(u *User) (*Node, int) {
+func (t *AVLTree) searchNode(u *Item) (*Node, int) {
 	t.path = t.path[0:0]
 
 	if t.Root == nil {
