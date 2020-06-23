@@ -5,14 +5,14 @@ import "strconv"
 type Item User
 
 type Node struct {
-	Item  *Item
-	Left  *Node
-	Right *Node
-	b     int
+	Item   *Item
+	Left   *Node
+	Right  *Node
+	height int
 }
 
 func NewNode(item *Item) *Node {
-	return &Node{Item: item}
+	return &Node{Item: item, height: 1}
 }
 
 func (n *Node) GetBalanceFactor() int {
@@ -21,25 +21,30 @@ func (n *Node) GetBalanceFactor() int {
 
 func (n *Node) String(getIndex func(*Item) int) string {
 	nb := ".0"
-	if n.b > 0 {
-		nb = "+" + strconv.Itoa(n.b)
-	} else if n.b < 0 {
-		nb = strconv.Itoa(n.b)
+	b := n.GetBalanceFactor()
+	if b > 0 {
+		nb = "+" + strconv.Itoa(b)
+	} else if b < 0 {
+		nb = strconv.Itoa(b)
 	}
 	return strconv.Itoa(getIndex(n.Item)) + nb
 }
 
 func (n *Node) getHeight() int {
-	height, root := 0, n
-	for root != nil {
-		if root.b == -1 {
-			root = root.Left
-		} else {
-			root = root.Right
-		}
-		height++
+	if n == nil {
+		return 0
 	}
-	return height
+	return n.height
+}
+
+func (n *Node) FixHeight() {
+	hl := n.Left.getHeight()
+	hr := n.Right.getHeight()
+	if hl > hr {
+		n.height = hl + 1
+	} else {
+		n.height = hr + 1
+	}
 }
 
 func (n *Node) Length() int {

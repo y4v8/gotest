@@ -213,8 +213,8 @@ func (t *AVLTree) rotateLeft(n *Node) *Node {
 	p := n.Right
 	n.Right = p.Left
 	p.Left = n
-	n.b = n.GetBalanceFactor()
-	p.b = p.GetBalanceFactor()
+	n.FixHeight()
+	p.FixHeight()
 	return p
 }
 
@@ -222,8 +222,8 @@ func (t *AVLTree) rotateRight(n *Node) *Node {
 	p := n.Left
 	n.Left = p.Right
 	p.Right = n
-	n.b = n.GetBalanceFactor()
-	p.b = p.GetBalanceFactor()
+	n.FixHeight()
+	p.FixHeight()
 	return p
 }
 
@@ -233,20 +233,20 @@ func (t *AVLTree) rotate() {
 	for i := len(t.path) - 1; i >= 0; i-- {
 		b = t.path[i].GetBalanceFactor()
 		if b > 1 {
-			if t.path[i].Right.b < 0 {
+			if t.path[i].Right.GetBalanceFactor() < 0 {
 				t.path[i].Right = t.rotateRight(t.path[i].Right)
 			}
 			p = t.rotateLeft(t.path[i])
 		} else if b < -1 {
-			if t.path[i].Left.b > 0 {
+			if t.path[i].Left.GetBalanceFactor() > 0 {
 				t.path[i].Left = t.rotateLeft(t.path[i].Left)
 			}
 			p = t.rotateRight(t.path[i])
 		} else {
-			if t.path[i].b == b {
+			if t.path[i].GetBalanceFactor() == b {
 				return
 			}
-			t.path[i].b = b
+			t.path[i].FixHeight()
 			continue
 		}
 
