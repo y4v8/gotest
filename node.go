@@ -8,29 +8,29 @@ type Node struct {
 	Item   *Item
 	Left   *Node
 	Right  *Node
-	height int
+	height int8
 }
 
 func NewNode(item *Item) *Node {
 	return &Node{Item: item, height: 1}
 }
 
-func (n *Node) GetBalanceFactor() int {
+func (n *Node) GetBalance() int8 {
 	return n.Right.getHeight() - n.Left.getHeight()
 }
 
 func (n *Node) String(getIndex func(*Item) int) string {
 	nb := ".0"
-	b := n.GetBalanceFactor()
+	b := n.GetBalance()
 	if b > 0 {
-		nb = "+" + strconv.Itoa(b)
+		nb = "+" + strconv.Itoa(int(b))
 	} else if b < 0 {
-		nb = strconv.Itoa(b)
+		nb = strconv.Itoa(int(b))
 	}
 	return strconv.Itoa(getIndex(n.Item)) + nb
 }
 
-func (n *Node) getHeight() int {
+func (n *Node) getHeight() int8 {
 	if n == nil {
 		return 0
 	}

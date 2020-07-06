@@ -39,7 +39,7 @@ func (t *AVLTree) String() string {
 	format := "%v[%0" + strconv.Itoa(repeat+2) + "v]\n"
 
 	height := t.Root.getHeight()
-	rowLength := height*4 - 1
+	rowLength := int(height)*4 - 1
 	rowCount := 2<<(height-1) - 1
 
 	var sb strings.Builder
@@ -228,17 +228,17 @@ func (t *AVLTree) rotateRight(n *Node) *Node {
 }
 
 func (t *AVLTree) rotate() {
-	var b int
+	var b int8
 	var p *Node
 	for i := len(t.path) - 1; i >= 0; i-- {
-		b = t.path[i].GetBalanceFactor()
+		b = t.path[i].GetBalance()
 		if b > 1 {
-			if t.path[i].Right.GetBalanceFactor() < 0 {
+			if t.path[i].Right.GetBalance() < 0 {
 				t.path[i].Right = t.rotateRight(t.path[i].Right)
 			}
 			p = t.rotateLeft(t.path[i])
 		} else if b < -1 {
-			if t.path[i].Left.GetBalanceFactor() > 0 {
+			if t.path[i].Left.GetBalance() > 0 {
 				t.path[i].Left = t.rotateLeft(t.path[i].Left)
 			}
 			p = t.rotateRight(t.path[i])
