@@ -37,7 +37,8 @@ func (n *Node) getHeight() int {
 	return n.height
 }
 
-func (n *Node) FixHeight() {
+func (n *Node) FixHeight() bool {
+	hn := n.height
 	hl := n.Left.getHeight()
 	hr := n.Right.getHeight()
 	if hl > hr {
@@ -45,6 +46,7 @@ func (n *Node) FixHeight() {
 	} else {
 		n.height = hr + 1
 	}
+	return hn != n.height
 }
 
 func (n *Node) Length() int {
