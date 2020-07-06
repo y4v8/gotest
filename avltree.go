@@ -243,9 +243,6 @@ func (t *AVLTree) rotate() {
 			}
 			p = t.rotateRight(t.path[i])
 		} else {
-			if t.path[i].GetBalanceFactor() == b {
-				return
-			}
 			t.path[i].FixHeight()
 			continue
 		}
