@@ -243,10 +243,8 @@ func (t *AVLTree) rotate() {
 			}
 			p = t.rotateRight(t.path[i])
 		} else {
-			if t.path[i].FixHeight() {
-				continue
-			}
-			return
+			t.path[i].FixHeight()
+			continue
 		}
 
 		if i == 0 {
