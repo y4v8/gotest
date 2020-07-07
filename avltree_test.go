@@ -288,7 +288,7 @@ func BenchmarkMathRand(b *testing.B) {
 }
 
 func BenchmarkRand(b *testing.B) {
-	users := sampleItems(100)
+	users := sampleItems(1000)
 	getIndex := func(u *Item) int { return u.UpdateID }
 
 	tree := NewAVLTree(getIndex)
@@ -313,7 +313,7 @@ func BenchmarkRand(b *testing.B) {
 		c++
 	}
 
-	b.Log(tree)
+	// b.Log(tree)
 	// b.Log(tree.Root.getHeight())
 }
 
@@ -325,6 +325,7 @@ func perm(n int) (out []btree.Item) {
 	}
 	return
 }
+
 func TestBTree(t *testing.T) {
 	tr := btree.New(*btreeDegree)
 	const treeSize = 10000
@@ -338,7 +339,7 @@ func TestBTree(t *testing.T) {
 }
 
 func BenchmarkRandBTree(b *testing.B) {
-	users := sampleItems(100000)
+	users := sampleItems(1000)
 
 	tree := btree.New(*btreeDegree)
 	for i := range users {
@@ -364,4 +365,61 @@ func BenchmarkRandBTree(b *testing.B) {
 
 	// b.Log(tree)
 	// b.Log(tree. Root.getHeight())
+}
+
+func BenchmarkMemBTree(t *testing.B) {
+	users := sampleItems(1000000)
+
+	tree := btree.New(*btreeDegree)
+	for i := range users {
+		tree.ReplaceOrInsert((*UserByUpdateID)(&users[i]))
+	}
+
+	var item *UserByUpdateID
+	k := 20
+	kMax := len(users)
+	c := kMax + 1
+
+	for i := 0; i < 10000; i++ {
+		k = int(rand.Uint32()) % kMax
+		item = (*UserByUpdateID)(&users[k])
+		// b.Log(c, item)
+		tree.Delete(item)
+		item.UpdateID = c
+		tree.ReplaceOrInsert(item)
+		c++
+	}
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	t.Log("Alloc:", m.Alloc)
+}
+
+func BenchmarkMemAVL(t *testing.B) {
+	users := sampleItems(1000000)
+	getIndex := func(u *Item) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+	}
+
+	var item *Item
+	k := 20
+	kMax := len(users)
+	c := kMax + 1
+
+	for i := 0; i < 10000; i++ {
+		k = int(rand.Uint32()) % kMax
+		item = &users[k]
+		// b.Log(c, item)
+		tree.Delete(item)
+		item.UpdateID = c
+		tree.Insert(item)
+		c++
+	}
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	t.Log("Alloc:", m.Alloc)
 }

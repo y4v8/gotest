@@ -4,6 +4,7 @@ type AVLTree struct {
 	Root     *Node
 	path     []*Node
 	getIndex func(*Item) int
+	tmpNode  *Node
 }
 
 func NewAVLTree(getIndex func(*Item) int) *AVLTree {
@@ -15,7 +16,14 @@ func NewAVLTree(getIndex func(*Item) int) *AVLTree {
 }
 
 func (t *AVLTree) Insert(item *Item) {
-	node := NewNode(item)
+	node := t.tmpNode
+	if node == nil {
+		node = NewNode(item)
+	} else {
+		node.Item = item
+		t.tmpNode = nil
+	}
+
 	if t.Root == nil {
 		t.Root = node
 		return
@@ -65,6 +73,9 @@ func (t *AVLTree) Delete(item *Item) {
 	} else {
 		parent.Right = p
 	}
+
+	last.Item, last.Left, last.Right, last.height = nil, nil, nil, 1
+	t.tmpNode = last
 
 	t.rotate()
 }
