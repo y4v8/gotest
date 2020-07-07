@@ -1,7 +1,5 @@
 package gotest
 
-import "strconv"
-
 type Item User
 
 type Node struct {
@@ -19,17 +17,6 @@ func (n *Node) GetBalance() int8 {
 	return n.Right.getHeight() - n.Left.getHeight()
 }
 
-func (n *Node) String(getIndex func(*Item) int) string {
-	nb := ".0"
-	b := n.GetBalance()
-	if b > 0 {
-		nb = "+" + strconv.Itoa(int(b))
-	} else if b < 0 {
-		nb = strconv.Itoa(int(b))
-	}
-	return strconv.Itoa(getIndex(n.Item)) + nb
-}
-
 func (n *Node) getHeight() int8 {
 	if n == nil {
 		return 0
@@ -37,8 +24,7 @@ func (n *Node) getHeight() int8 {
 	return n.height
 }
 
-func (n *Node) FixHeight() bool {
-	hn := n.height
+func (n *Node) FixHeight() {
 	hl := n.Left.getHeight()
 	hr := n.Right.getHeight()
 	if hl > hr {
@@ -46,7 +32,6 @@ func (n *Node) FixHeight() bool {
 	} else {
 		n.height = hr + 1
 	}
-	return hn != n.height
 }
 
 func (n *Node) Length() int {

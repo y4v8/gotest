@@ -1,12 +1,5 @@
 package gotest
 
-import (
-	"fmt"
-	"io"
-	"strconv"
-	"strings"
-)
-
 type AVLTree struct {
 	Root     *Node
 	path     []*Node
@@ -14,63 +7,11 @@ type AVLTree struct {
 }
 
 func NewAVLTree(getIndex func(*Item) int) *AVLTree {
-	const max int = 45
+	const maxHeight int = 45
 	return &AVLTree{
-		path:     make([]*Node, 0, max),
+		path:     make([]*Node, 0, maxHeight),
 		getIndex: getIndex,
 	}
-}
-
-func (t *AVLTree) String() string {
-	if t.Root == nil {
-		return "[]"
-	}
-
-	max := 0
-	for last := t.Root; last != nil; last = last.Right {
-		max = t.getIndex(last.Item)
-	}
-	repeat := 0
-	for ; max > 0; max /= 10 {
-		repeat++
-	}
-	vs := "|  " + strings.Repeat(" ", repeat)
-	es := "   " + strings.Repeat(" ", repeat)
-	format := "%v[%0" + strconv.Itoa(repeat+2) + "v]\n"
-
-	height := t.Root.getHeight()
-	rowLength := int(height)*4 - 1
-	rowCount := 2<<(height-1) - 1
-
-	var sb strings.Builder
-	sb.Grow(rowLength * rowCount)
-
-	fmt.Fprintln(&sb, "")
-
-	var write func(io.Writer, string, int, *Node)
-	write = func(b io.Writer, prefix string, dir int, n *Node) {
-		if n == nil {
-			return
-		}
-		if n.Right != nil {
-			if dir < 0 {
-				write(b, prefix+vs, 1, n.Right)
-			} else {
-				write(b, prefix+es, 1, n.Right)
-			}
-		}
-		fmt.Fprintf(b, format, prefix, n.String(t.getIndex))
-		if n.Left != nil {
-			if dir > 0 {
-				write(b, prefix+vs, -1, n.Left)
-			} else {
-				write(b, prefix+es, -1, n.Left)
-			}
-		}
-	}
-	write(&sb, "", 0, t.Root)
-
-	return sb.String()
 }
 
 func (t *AVLTree) Insert(item *Item) {
@@ -86,7 +27,7 @@ func (t *AVLTree) Insert(item *Item) {
 	} else if dir < 0 {
 		last.Left = node
 	} else {
-		panic("Index '" + strconv.Itoa(t.getIndex(item)) + "' is already exist")
+		panic("index is already exist")
 	}
 
 	t.rotate()
@@ -211,8 +152,7 @@ func (t *AVLTree) searchMin(n *Node) *Node {
 
 func (t *AVLTree) rotateLeft(n *Node) *Node {
 	p := n.Right
-	n.Right = p.Left
-	p.Left = n
+	p.Left, n.Right = n, p.Left
 	n.FixHeight()
 	p.FixHeight()
 	return p
@@ -220,8 +160,7 @@ func (t *AVLTree) rotateLeft(n *Node) *Node {
 
 func (t *AVLTree) rotateRight(n *Node) *Node {
 	p := n.Left
-	n.Left = p.Right
-	p.Right = n
+	p.Right, n.Left = n, p.Right
 	n.FixHeight()
 	p.FixHeight()
 	return p

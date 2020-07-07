@@ -1,12 +1,73 @@
 package gotest
 
 import (
+	"database/sql"
+	"flag"
 	"math/rand"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/google/btree"
+
+	_ "github.com/mattn/go-sqlite3"
 )
+
+func BenchmarkSqlite(b *testing.B) {
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer db.Close()
+
+	sqlStmt := `create table foo (id integer not null primary key, name text, update_id integer);`
+	_, err = db.Exec(sqlStmt)
+	if err != nil {
+		b.Errorf("%q: %s\n", err, sqlStmt)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		b.Fatal(err)
+	}
+	stmt, err := tx.Prepare("insert into foo(id, name, update_id) values(?, ?, ?)")
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer stmt.Close()
+	b.ResetTimer()
+
+	const MAX = 1000000
+	for i := 1; i <= MAX; i++ {
+		_, err = stmt.Exec(i, "PupkinVI", i)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	tx.Commit()
+
+	b.StopTimer()
+	rows, err := db.Query("select count(*) as cnt from foo")
+	if err != nil {
+		b.Fatal(err)
+	}
+	var (
+		// id int
+		// updateID int
+		// name string
+		cnt int
+	)
+	for rows.Next() {
+		rows.Scan(&cnt)
+		if cnt != MAX {
+			b.Error("count:", cnt)
+		}
+	}
+
+}
 
 func sampleItems(n int) []Item {
 	users := make([]Item, n)
@@ -24,7 +85,7 @@ func sampleItems(n int) []Item {
 }
 
 func BenchmarkTree(b *testing.B) {
-	sample := sampleItems(2000)
+	sample := sampleItems(1000000)
 	u := &Item{
 		ID:       88,
 		UpdateID: 1,
@@ -44,6 +105,11 @@ func BenchmarkTree(b *testing.B) {
 			b.Fatalf("error: %v", tree)
 		}
 	}
+	b.StopTimer()
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	b.Log("Alloc:", m.Alloc)
 }
 
 func BenchmarkArray(b *testing.B) {
@@ -178,4 +244,124 @@ func TestGetItems(t *testing.T) {
 	if result != expect {
 		t.Errorf("indices are '%v', expect '%v'", result, expect)
 	}
+}
+
+func TestItems(t *testing.T) {
+	users := sampleItems(1000000)
+	getIndex := func(u *Item) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+	}
+	// t.Error(tree)
+	t.Log(tree.Root.getHeight())
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	t.Log("Alloc:", m.Alloc)
+	t.Log("TotalAlloc:", m.TotalAlloc)
+
+}
+
+func TestItem(t *testing.T) {
+	users := sampleItems(16)
+	getIndex := func(u *Item) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+		t.Log(tree)
+	}
+	t.Log(tree.Root.getHeight())
+	ids := make([]int, len(users))
+	for i := range users {
+		ids[i] = users[i].UpdateID
+	}
+	t.Log(ids)
+}
+
+func BenchmarkMathRand(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		rand.Int63()
+	}
+}
+
+func BenchmarkRand(b *testing.B) {
+	users := sampleItems(100)
+	getIndex := func(u *Item) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+	}
+	b.ResetTimer()
+
+	// b.N = 99
+	var item *Item
+	k := 20
+	kMax := len(users)
+	c := kMax + 1
+
+	for i := 0; i < b.N; i++ {
+		k = int(rand.Uint32()) % kMax
+		item = &users[k]
+		// b.Log(c, item)
+		tree.Delete(item)
+		item.UpdateID = c
+		tree.Insert(item)
+		c++
+	}
+
+	b.Log(tree)
+	// b.Log(tree.Root.getHeight())
+}
+
+var btreeDegree = flag.Int("degree", 32, "B-Tree degree")
+
+func perm(n int) (out []btree.Item) {
+	for _, v := range rand.Perm(n) {
+		out = append(out, btree.Int(v))
+	}
+	return
+}
+func TestBTree(t *testing.T) {
+	tr := btree.New(*btreeDegree)
+	const treeSize = 10000
+
+	for _, item := range perm(treeSize) {
+		if x := tr.ReplaceOrInsert(item); x != nil {
+			t.Fatal("insert found item", item)
+		}
+	}
+	// }
+}
+
+func BenchmarkRandBTree(b *testing.B) {
+	users := sampleItems(100000)
+
+	tree := btree.New(*btreeDegree)
+	for i := range users {
+		tree.ReplaceOrInsert((*UserByUpdateID)(&users[i]))
+	}
+	b.ResetTimer()
+
+	// b.N = 99
+	var item *UserByUpdateID
+	k := 20
+	kMax := len(users)
+	c := kMax + 1
+
+	for i := 0; i < b.N; i++ {
+		k = int(rand.Uint32()) % kMax
+		item = (*UserByUpdateID)(&users[k])
+		// b.Log(c, item)
+		tree.Delete(item)
+		item.UpdateID = c
+		tree.ReplaceOrInsert(item)
+		c++
+	}
+
+	// b.Log(tree)
+	// b.Log(tree. Root.getHeight())
 }

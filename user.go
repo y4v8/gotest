@@ -1,10 +1,16 @@
 package gotest
 
+import "github.com/google/btree"
+
 type User struct {
 	ID       int
 	Name     string
 	UpdateID int
 }
+
+type UserByUpdateID User
+
+func (a *UserByUpdateID) Less(b btree.Item) bool { return a.UpdateID < b.(*UserByUpdateID).UpdateID }
 
 type ByID []User
 
