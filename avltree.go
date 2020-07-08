@@ -106,7 +106,7 @@ func (t *AVLTree) GetItems(item *Item) []*Item {
 	id := t.getIndex(item)
 	var appendItem func(*Node)
 	appendItem = func(n *Node) {
-		if n.Left != nil {
+		if n.Left != nil && t.getIndex(n.Item) > id {
 			appendItem(n.Left)
 		}
 		if t.getIndex(n.Item) >= id {

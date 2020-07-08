@@ -3,6 +3,7 @@ package gotest
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"math/rand"
 	"runtime"
 	"sort"
@@ -279,6 +280,62 @@ func TestItem(t *testing.T) {
 		ids[i] = users[i].UpdateID
 	}
 	t.Log(ids)
+
+	ids = ids[:0]
+	items := tree.GetItems(&Item{UpdateID: 11})
+	for i := range items {
+		ids = append(ids, items[i].UpdateID)
+	}
+	t.Log(ids)
+}
+
+func BenchmarkItems(b *testing.B) {
+	users := sampleItems(100000)
+	getIndex := func(u *Item) int { return u.UpdateID }
+
+	tree := NewAVLTree(getIndex)
+	for i := range users {
+		tree.Insert(&users[i])
+	}
+	b.ResetTimer()
+
+	// b.N = 99
+	var item *Item
+	k := 20
+	kMax := len(users)
+	cnt := 0
+
+	for i := 0; i < b.N; i++ {
+		k = int(rand.Uint32()) % kMax
+		item = &users[k]
+		// b.Log(c, item)
+		items := tree.GetItems(item)
+		cnt += len(items)
+	}
+
+	// b.Log(tree)
+	// b.Log(tree.Root.getHeight())
+}
+
+type A0 struct{ ID int }
+type A1 A0
+
+func (t *A0) Print() {
+	fmt.Println("A0")
+}
+func (t *A1) Print() {
+	fmt.Println("A1")
+}
+
+type Printer interface {
+	Print()
+}
+
+func TestMulti(t *testing.T) {
+	a0 := A0{ID: 0}
+	(*A1)(&a0).Print()
+	a1 := A1(a0)
+	a1.Print()
 }
 
 func BenchmarkMathRand(b *testing.B) {
