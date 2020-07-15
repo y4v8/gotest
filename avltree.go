@@ -180,29 +180,30 @@ func (t *AVLTree) rotateRight(n *Node) *Node {
 func (t *AVLTree) rotate() {
 	var b int8
 	var p *Node
-	for i := len(t.path) - 1; i >= 0; i-- {
-		b = t.path[i].GetBalance()
+	path := t.path
+	for i := len(path) - 1; i >= 0; i-- {
+		b = path[i].GetBalance()
 		if b > 1 {
-			if t.path[i].Right.GetBalance() < 0 {
-				t.path[i].Right = t.rotateRight(t.path[i].Right)
+			if path[i].Right.GetBalance() < 0 {
+				path[i].Right = t.rotateRight(path[i].Right)
 			}
-			p = t.rotateLeft(t.path[i])
+			p = t.rotateLeft(path[i])
 		} else if b < -1 {
-			if t.path[i].Left.GetBalance() > 0 {
-				t.path[i].Left = t.rotateLeft(t.path[i].Left)
+			if path[i].Left.GetBalance() > 0 {
+				path[i].Left = t.rotateLeft(path[i].Left)
 			}
-			p = t.rotateRight(t.path[i])
+			p = t.rotateRight(path[i])
 		} else {
-			t.path[i].FixHeight()
+			path[i].FixHeight()
 			continue
 		}
 
 		if i == 0 {
 			t.Root = p
-		} else if t.path[i-1].Left == t.path[i] {
-			t.path[i-1].Left = p
+		} else if path[i-1].Left == path[i] {
+			path[i-1].Left = p
 		} else {
-			t.path[i-1].Right = p
+			path[i-1].Right = p
 		}
 	}
 }
